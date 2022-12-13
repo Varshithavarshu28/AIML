@@ -1,0 +1,23 @@
+import pandas as pd
+dataset=pd.read_csv("Prog 2b-data22_sports.csv")
+x=dataset.iloc[:,0:-1].values
+y=dataset.iloc[:,-1].values
+s=x[0]
+g=[["?" for i in range (len(s))] for i in range(len(s))]
+for i,h in enumerate(x):
+    if y[i]=='Y':
+        for j in range(len(s)):
+            if h[j]!=s[j]:
+                s[j]='?'
+                g[i][j]='?'
+    if y[i]=='N':
+        for j in range (len(s)):
+            if h[j]!=s[j]:
+                g[j][j]=s[j]
+            else:
+                g[j][j]='?'
+ind=[i for i,val in enumerate(g) if val==['?','?','?','?','?','?']]
+print(ind)
+for i in ind:
+    g.remove(['?','?','?','?','?','?'])
+print(g,s,"\n")            

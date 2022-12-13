@@ -1,0 +1,549 @@
+#P1 - A Star Algo
+#--------------------
+def aStarAlgo(start_node, stop_node):
+    open_set = set(start_node)
+    closed_set = set()
+    g = {}
+    parents = {}
+    g[start_node] = 0
+    parents[start_node] = start_node
+    while len(open_set) > 0:
+        n = None
+        for v in open_set:
+            if n == None or g[v] + heuristic(v) < g[n] + heuristic(n):
+                n = v
+        if n == stop_node or Graph_nodes[n] == None:
+            pass
+        else:
+            for (m, weight) in get_neighbors(n):
+                if m not in open_set and m not in closed_set:
+                    open_set.add(m)
+                    parents[m] = n
+                    g[m] = g[n] + weight
+                else:
+                    if g[m] > g[n] + weight:
+                        g[m] = g[n] + weight
+                        parents[m] = n
+                        if m in closed_set:
+                            closed_set.remove(m)
+                            open_set.add(m)
+        if n == None:
+            print('Path does not exist!')
+            return None
+        
+        if n == stop_node:
+            path = []
+            while parents[n] != n:
+                path.append(n)
+                n = parents[n]
+            path.append(start_node)
+            path.reverse()
+            print('Path found: {}'.format(path))
+            return path
+        
+        open_set.remove(n)
+        closed_set.add(n)
+    print('Path does not exist!')
+    return None
+ 
+def get_neighbors(v):
+    if v in Graph_nodes:
+        return Graph_nodes[v]
+    else:
+        return None
+ 
+def heuristic(n):
+    H_dist = {
+        'A': 11,
+        'B': 6,
+        'C': 5,
+        'D': 7,
+        'E': 3,
+        'F': 6,
+        'G': 5,
+        'H': 3,
+        'I': 1,
+        'J': 0
+    }
+    return H_dist[n]
+ 
+Graph_nodes = {
+    'A': [('B', 6), ('F', 3)],
+    'B': [('A', 6), ('C', 3), ('D', 2)],
+    'C': [('B', 3), ('D', 1), ('E', 5)],
+    'D': [('B', 2), ('C', 1), ('E', 8)],
+    'E': [('C', 5), ('D', 8), ('I', 5), ('J', 5)],
+    'F': [('A', 3), ('G', 1), ('H', 7)],
+    'G': [('F', 1), ('I', 3)],
+    'H': [('F', 7), ('I', 2)],
+    'I': [('E', 5), ('G', 3), ('H', 2), ('J', 3)],
+}
+ 
+aStarAlgo('A', 'J')
+ 
+#P2 - AO Star Algo
+#-------------------
+class Graph:
+    def __init__(self, graph, heuristicNodeList, startNode):
+        self.graph = graph
+        self.H=heuristicNodeList
+        self.start=startNode
+        self.parent={}
+        self.status={}
+        self.solutionGraph={}
+        
+    def applyAOStar(self):
+        self.aoStar(self.start, False)
+ 
+    def getNeighbors(self, v):
+        return self.graph.get(v,'')
+ 
+    def getStatus(self,v):
+        return self.status.get(v,0)
+ 
+    def setStatus(self,v, val):
+        self.status[v]=val
+ 
+    def getHeuristicNodeValue(self, n):
+        return self.H.get(n,0)
+ 
+    def setHeuristicNodeValue(self, n, value):
+        self.H[n]=value
+ 
+    def printSolution(self):
+        print("FOR GRAPH SOLUTION, TRAVERSE THE GRAPH FROM THE START NODE:",self.start)
+        print("------------------------------------------------------------")
+        print(self.solutionGraph)
+        print("------------------------------------------------------------")
+ 
+    def computeMinimumCostChildNodes(self, v):
+        minimumCost=0
+        costToChildNodeListDict={}
+        costToChildNodeListDict[minimumCost]=[]
+        flag=True
+        for nodeInfoTupleList in self.getNeighbors(v):
+            cost=0
+            nodeList=[]
+            for c, weight in nodeInfoTupleList:
+                cost=cost+self.getHeuristicNodeValue(c)+weight
+                nodeList.append(c)
+            if flag==True:
+                minimumCost=cost
+                costToChildNodeListDict[minimumCost]=nodeList
+                flag=False
+            else:
+                if minimumCost>cost:
+                    minimumCost=cost
+                    costToChildNodeListDict[minimumCost]=nodeList
+        return minimumCost, costToChildNodeListDict[minimumCost]
+ 
+    def aoStar(self, v, backTracking):
+        print("HEURISTIC VALUES :", self.H)
+        print("SOLUTION GRAPH :", self.solutionGraph)
+        print("PROCESSING NODE :", v)
+        print("-----------------------------------------------------------------------------------------")
+        if self.getStatus(v) >= 0:
+            minimumCost, childNodeList = self.computeMinimumCostChildNodes(v)
+            print(minimumCost, childNodeList)
+            self.setHeuristicNodeValue(v, minimumCost)
+            self.setStatus(v,len(childNodeList))
+            solved=True
+            for childNode in childNodeList:
+                self.parent[childNode]=v
+                if self.getStatus(childNode)!=-1:
+                    solved=solved & False
+            if solved==True:
+                self.setStatus(v,-1)
+                self.solutionGraph[v]=childNodeList
+            if v!=self.start:
+                self.aoStar(self.parent[v], True)
+            if backTracking==False:
+                for childNode in childNodeList:
+                    self.setStatus(childNode,0)
+                    self.aoStar(childNode, False)
+ 
+print ("Graph - 1")
+h1 = {'A': 1, 'B': 6, 'C': 2, 'D': 12, 'E': 2, 'F': 1, 'G': 5, 'H': 7, 'I': 7, 'J': 1}
+graph1 = {
+    'A': [[('B', 1), ('C', 1)], [('D', 1)]],
+    'B': [[('G', 1)], [('H', 1)]],
+    'C': [[('J', 1)]],
+    'D': [[('E', 1), ('F', 1)]],
+    'G': [[('I', 1)]]
+}
+ 
+G1= Graph(graph1, h1, 'A')
+G1.applyAOStar()
+G1.printSolution()
+print ("Graph - 2")
+h2 ={'A': 1,'B': 6,'C':12,'D':10,'E':4,'F':4,'G':5,'H':7}
+graph2 = {
+    'A':[[('B',1),('C',1)],[('D',1)]],
+    'B':[[('G',1),('F',1)]],
+    'D':[[('E',1),('H',1)]]
+}
+G2 = Graph(graph2,h2,'A')
+G2.applyAOStar()
+G2.printSolution()
+ 
+#P3 - Decision Tree
+import pandas as pd
+df_tennis=pd.read_csv("prog3dataset.csv")
+print("\n Given play tennis data set:\n\n",df_tennis)
+ 
+def entropy(probs):
+    import math
+    return sum([-prob*math.log(prob,2) for prob in probs])
+ 
+def entropy_of_list(a_list):
+    from collections import Counter
+    cnt = Counter(x for x in a_list)
+    num_instances=len(a_list)
+    probs=[x/num_instances for x in cnt.values()]
+    return entropy(probs)
+total_entropy = entropy_of_list(df_tennis['PlayTennis'])
+print("\n Total entropy of play tennis dataset:",total_entropy)
+ 
+def information_gain(df,split_attribute_name,target_attribute_name,trace=0):
+    df_split=df.groupby(split_attribute_name)
+    for name,group in df_split:
+        nobs=len(df.index)
+    df_agg_cnt=df_split.agg({target_attribute_name:[entropy_of_list,lambda x:len(x)/nobs]})[target_attribute_name]
+    df_agg_cnt.columns=['Entropy','Probobservation']
+    if trace:
+        print(df_agg_cnt)
+    new_entropy=sum(df_agg_cnt['Entropy']*df_agg_cnt['Probobservation'])
+    old_entropy=entropy_of_list(df[target_attribute_name])
+    return old_entropy-new_entropy
+print("Info gain for outlook is:"+str(information_gain(df_tennis,'outlook','PlayTennis')),"\n")
+print("Info gain for humidity is:"+str(information_gain(df_tennis,'humidity','PlayTennis')),"\n")
+print("Info gain for wind is:"+str(information_gain(df_tennis,'wind','PlayTennis')),"\n")
+print("Info gain for temperature is:"+str(information_gain(df_tennis,'temp','PlayTennis')),"\n")
+ 
+def id3(df,target_attribute_name,attribute_names,default_class=None):
+    from collections import Counter
+    cnt=Counter(x for x in df[target_attribute_name])
+    if len(cnt)==1:
+        return next(iter(cnt))
+    elif df.empty or (not attribute_names):
+        return default_class
+    else:
+        default_class = max(cnt.keys())
+    gainy = [information_gain(df,attr,target_attribute_name) for attr in attribute_names]
+    index_of_max=gainy.index(max(gainy))
+    best_attr=attribute_names[index_of_max]
+    tree={best_attr:{}}
+    remaining_attribute_names=[i for i in attribute_names if i!=best_attr]
+    for attr_val,data_subset in df.groupby(best_attr):
+        subtree=id3(data_subset,target_attribute_name,remaining_attribute_names,default_class)
+        tree[best_attr][attr_val]=subtree
+    return tree
+attribute_names=list(df_tennis.columns)
+attribute_names.remove('PlayTennis')
+from pprint import pprint
+tree = id3(df_tennis,'PlayTennis',attribute_names)
+print("\n\n The Resultant Descision Tree is :\n")
+pprint(tree)
+ 
+def predict(query,tree,default=1):
+    for key in list(query.keys()):
+        if key in list(tree.keys()):
+            try:
+                result=tree[key][query[key]]
+            except:
+                return default
+            result=tree[key][query[key]]
+            if isinstance(result,dict):
+                return predict(query,result)
+            else:
+                return result
+query={'outlook':'sunny','temp':'cold','humidity':'normal','wind':'weak'}
+answer=predict(query,tree)
+print('\n Can Tennis be Played for the given sample:'+answer)
+ 
+#---------------------------------------------------------------------------------------
+#CSV File
+#outlook,temp,humidity,wind,PlayTennis
+#sunny,hot,high,weak,no
+#sunny,hot,high,strong,no
+#overcast,hot,high,weak,yes
+#rain,mild,high,weak,yes
+#rain,cool,normal,weak,yes
+#rain,cool,normal,strong,no
+#overcast,cool,normal,strong,yes
+#sunny,mild,high,weak,no
+#sunny,cool,normal,weak,yes
+#rain,mild,normal,weak,yes
+#sunny,mild,normal,strong,yes
+#overcast,mild,high,strong,yes
+#overcast,hot,normal,weak,yes
+#rain,mild,high,strong,no
+ 
+#P4 - Candidate Elimination
+import numpy as np
+import pandas as pd
+data=pd.DataFrame(data=pd. read_csv('candidate_elimination.csv'))
+concepts=np.array(data.iloc[:,0:-1])
+target=np.array(data.iloc[:,-1])
+def  learn(concepts, target):
+    specific_h=concepts[0].copy()
+    general_h=[["?" for i in range(len(specific_h))] for i in range(len(specific_h))]
+    for i,h in enumerate(concepts):
+        if target[i]=="Y":
+            for x in range(len(specific_h)):
+                if h[x]!=specific_h[x]:
+                    specific_h[x]='?'
+                    general_h[x][x]='?'
+        if target[i]=="N":
+            for x in range(len(specific_h)):
+                if h[x]!=specific_h[x]:
+                    general_h[x][x]=specific_h[x]
+                else:
+                    general_h[x][x]='?'
+ 
+    indices=[i for i,val in enumerate(general_h) if val == ['?','?','?','?','?','?']]
+ 
+    for i in indices:
+        general_h.remove(['?','?','?','?','?','?'])
+    return specific_h,general_h
+s_final,g_final=learn(concepts,target)
+print("Final Specific_h:",s_final, sep="\n")
+print("Final General_h:",g_final, sep="\n")
+ 
+#P5 - Find S
+import numpy as np 
+import pandas as pd
+data= pd.read_csv("C:/Users/ML-44/Desktop/For Exam Dataset for ML/Prog 3-data3.csv")
+print ('Data',data)
+def train (concepts,target):
+    specific_h = concepts[0]
+    print('specific1',specific_h)
+    for i,h in enumerate(concepts):
+        print('i',i)
+        print('h',h)
+        if target[i] == "yes":
+            for x in range (len(specific_h)):
+                print('x',x)
+                print ('specific',specific_h)
+                if h[x] == specific_h[x]:
+                    pass
+                else:
+                    specific_h[x] = "?"
+    return specific_h
+concepts = np.array(data.iloc[:,0:-1])
+target = np.array(data.iloc[:,-1])
+print('concept',concepts)
+print('Target',target)
+print(train(concepts,target))
+
+#P6 - Back Propagation
+import numpy as np
+X=np.array(([2,9],[1,5],[3,6]),dtype=float)
+Y=np.array(([92],[86],[89]),dtype=float)
+X=X/np.amax(X,axis=0)
+Y=Y/100
+def sigmoid(X):
+    return 1/(1+np.exp(-X))
+def derivatives_sigmoid(X):
+    return X+(1-X)
+epoch=90000
+lr=0.1
+inputlayer_neurons=2
+hiddenlayer_neurons=3
+output_neurons=1
+wh=np.random.uniform(size=(inputlayer_neurons,hiddenlayer_neurons))
+bh=np.random.uniform(size=(1,hiddenlayer_neurons))
+wout=np.random.uniform(size=(hiddenlayer_neurons,output_neurons))
+bout=np.random.uniform(size=(1,output_neurons))
+for i in range(epoch):
+    hinp1=np.dot(X,wh)
+    hinp=hinp1+bh
+    hlayer_act=sigmoid(hinp)
+    outinp1=np.dot(hlayer_act,wout)
+    outinp=outinp1+bout
+    output=sigmoid(outinp)
+    EO=Y-output
+    outgrad=derivatives_sigmoid(output)
+    d_output=EO*outgrad
+    EH=d_output.dot(wout.T)
+    hiddengrad=derivatives_sigmoid(hlayer_act)
+    d_hiddenlayer=EH*hiddengrad
+    wout+=hlayer_act.T.dot(d_output)*lr
+    wh+=X.T.dot(d_hiddenlayer)*lr
+print("Input:\n"+str(X))
+print("Actual output:\n"+str(Y))
+print("predicted output:\n",output)
+   
+#P7 - KNN
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import datasets
+from sklearn.metrics import classification_report,confusion_matrix
+iris=datasets.load_iris()
+print("Iris dataset loaded....")
+
+x_train,x_test,y_train,y_test=train_test_split(iris.data,iris.target,test_size=4)
+print("dataset is split into training and testing...")
+print("size of training data and its label",x_train.shape,y_train.shape)
+print("size of testing data and its label",x_test.shape,y_test.shape)
+
+for i in range(len(iris.target_names)):
+    print("Label",i,"-",str(iris.target_names[i]))
+    
+classifier=KNeighborsClassifier(n_neighbors=1)
+
+classifier.fit(x_train,y_train)
+
+y_pred=classifier.predict(x_test)
+
+print("result of classification using knn with k=1")
+
+for r in range (0,len(x_test)):
+    print("sample:",str(x_test[r]),"Actual label:",str(y_test[r]),"predicted-label:",str(y_pred[r]))
+    print("Classification Accuracy:",classifier.score(x_test,y_test));
+    
+
+print('confusion matrix')
+print(confusion_matrix(y_test,y_pred))
+print('Accuracy matrix')
+print(classification_report(y_test,y_pred))
+
+#P8 - Naive Bayesian
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import datasets
+from sklearn.metrics import classification_report,confusion_matrix
+iris=datasets.load_iris()
+print("Iris dataset loaded....")
+
+x_train,x_test,y_train,y_test=train_test_split(iris.data,iris.target,test_size=4)
+print("dataset is split into training and testing...")
+print("size of training data and its label",x_train.shape,y_train.shape)
+print("size of testing data and its label",x_test.shape,y_test.shape)
+
+for i in range(len(iris.target_names)):
+    print("Label",i,"-",str(iris.target_names[i]))
+    
+classifier=KNeighborsClassifier(n_neighbors=1)
+
+classifier.fit(x_train,y_train)
+
+y_pred=classifier.predict(x_test)
+
+print("result of classification using knn with k=1")
+
+for r in range (0,len(x_test)):
+    print("sample:",str(x_test[r]),"Actual label:",str(y_test[r]),"predicted-label:",str(y_pred[r]))
+    print("Classification Accuracy:",classifier.score(x_test,y_test));
+    
+
+print('confusion matrix')
+print(confusion_matrix(y_test,y_pred))
+print('Accuracy matrix')
+print(classification_report(y_test,y_pred))
+
+#P9 - EM Algorithm
+import matplotlib.pyplot as plt 
+from sklearn import datasets 
+from sklearn.cluster import KMeans 
+import pandas as pd
+import numpy as np
+
+# import some data to play with 
+iris = datasets.load_iris()
+X = pd.DataFrame(iris.data)
+X.columns = ['Sepal_Length','Sepal_Width','Petal_Length','Petal_Width'] 
+y = pd.DataFrame(iris.target)
+y.columns = ['Targets']
+
+# Build the K Means Model
+model = KMeans(n_clusters=3)
+model.fit(X) # model.labels_ : Gives cluster no for which samples belongs to
+
+# # Visualise the clustering results
+plt.figure(figsize=(14,7))
+colormap = np.array(['red', 'lime', 'black'])
+
+# Plot the Original Classifications using Petal features
+plt.subplot(1, 3, 1)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[y.Targets], s=40) 
+plt.title('Real Clusters')
+plt.xlabel('Petal Length') 
+plt.ylabel('Petal Width')
+
+# Plot the Models Classifications
+plt.subplot(1, 3, 2)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[model.labels_], s=40) 
+plt.title('K-Means Clustering')
+plt.xlabel('Petal Length') 
+plt.ylabel('Petal Width')
+
+# General EM for GMM
+from sklearn import preprocessing
+
+# transform your data such that its distribution will have a # mean value 0 and standard deviation of 1.
+scaler = preprocessing.StandardScaler() 
+scaler.fit(X)
+xsa = scaler.transform(X)
+xs = pd.DataFrame(xsa, columns = X.columns)
+from sklearn.mixture import GaussianMixture 
+gmm = GaussianMixture(n_components=40) 
+gmm.fit(xs)
+plt.subplot(1, 3, 3)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[0], s=40) 
+plt.title('GMM Clustering')
+plt.xlabel('Petal Length') 
+plt.ylabel('Petal Width')
+
+print('Observation: The GMM using EM algorithm based clustering matched the true labels more closely than the Kmeans.')
+
+#P10 Locally Weighted Regression 
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+def kernel(point, xmat, k):
+    m,n = np.shape(xmat)
+    weights = np.mat(np.eye((m)))
+    for j in range(m):
+        diff = point - X[j]
+        weights[j,j] = np.exp(diff*diff.T/(-2.0*k**2))
+    return weights
+
+def localWeight(point, xmat, ymat, k):
+    wei = kernel(point,xmat,k)
+    W = (X.T*(wei*X)).I*(X.T*(wei*ymat.T))
+    return W
+     
+def localWeightRegression(xmat, ymat, k):
+    m,n = np.shape(xmat)
+    ypred = np.zeros(m)
+    for i in range(m):
+        ypred[i] = xmat[i]*localWeight(xmat[i],xmat,ymat,k)
+    return ypred
+       
+# load data points
+data = pd.read_csv("Desktop\ML Lab\For Exam Dataset for ML\data10_tips (1).csv")
+bill = np.array(data.total_bill)
+tip = np.array(data.tip)
+ 
+#preparing and add 1 in bill
+mbill = np.mat(bill)
+mtip = np.mat(tip)
+
+m= np.shape(mbill)[1]
+one = np.mat(np.ones(m))
+X = np.hstack((one.T,mbill.T))
+
+#set k here
+ypred = localWeightRegression(X,mtip,0.5)
+SortIndex = X[:,1].argsort(0)
+xsort = X[SortIndex][:,0]
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax.scatter(bill,tip, color='green')
+ax.plot(xsort[:,1],ypred[SortIndex], color = 'red', linewidth=5)
+plt.xlabel('Total bill')
+plt.ylabel('Tip')
+plt.show();
